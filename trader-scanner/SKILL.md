@@ -2,8 +2,8 @@
 name: trader-scanner
 description: >-
   Chart Scanner. Scans thousands of charts for setups: opening-range
-  breakouts, flags, oversold bounces. Builds the list of US-listed common
-  stocks, ordinary shares and ADRs from Nasdaq Trader's symbol directories,
+  breakouts, flags, oversold bounces. Builds the list of Nifty 500 NSE
+  stocks (India edition),
   runs a pre-market scan of daily closes (20-day closing-high breakout, bull
   flag, reclaimed the 20-day average, oversold, oversold bounce) and an
   intraday opening-range breakout scan on 5-minute bars, then writes
@@ -14,6 +14,8 @@ description: >-
   look at today", or at the start of a trading day before /trader-news.
 argument-hint: "[universe | daily | orb] [--at HH:MM]"
 ---
+
+> **India (NSE) edition.** This copy is patched for Indian stocks: IST clock, NSE session 9:15 AM to 3:30 PM, NSE 2026 holidays, prices in ₹. Use plain NSE symbols (RELIANCE, TCS, M&M, BAJAJ-AUTO); the scripts add `.NS` for Yahoo. Times you type (--now, --at, entry times) are IST. The scanner's universe is the Nifty 500.
 
 # trader-scanner
 

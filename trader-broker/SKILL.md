@@ -17,6 +17,8 @@ description: >-
 argument-hint: "[order number]"
 ---
 
+> **India (NSE) edition: this skill is still US-only.** It reads US sources (SEC EDGAR, US news feeds, a US broker or US House disclosures) and does not work for NSE stocks. Tell the user this before running it on an Indian ticker.
+
 # trader-broker
 
 The Order Executor is the only skill in this pack that can lead to a real

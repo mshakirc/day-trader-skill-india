@@ -18,6 +18,8 @@ description: >-
 argument-hint: "[path to orders.json]"
 ---
 
+> **India (NSE) edition.** This copy is patched for Indian stocks: IST clock, NSE session 9:15 AM to 3:30 PM, NSE 2026 holidays, prices in ₹. Use plain NSE symbols (RELIANCE, TCS, M&M, BAJAJ-AUTO); the scripts add `.NS` for Yahoo. Times you type (--now, --at, entry times) are IST. The scanner's universe is the Nifty 500.
+
 # trader-risk
 
 The Risk Manager is the gate between a proposal and the broker. Every order

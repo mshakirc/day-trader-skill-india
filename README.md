@@ -1,6 +1,26 @@
+# Day Trader Skill — India (NSE) edition
+
+A patched copy of [Jake Schincariol's day-trader-skill](https://github.com/Jakeschincariol/day-trader-skill) (MIT) for Indian stocks.
+
+| Skill | India |
+|---|---|
+| trader-scanner | Works: Nifty 500 universe, daily setups and opening-range scan on NSE |
+| trader-timemachine | Works: replays on NSE 5-minute bars (75 bars, 9:15 to 3:30 IST) |
+| trader-entry, trader-exit | Work: NSE session times |
+| trader-risk, trader-budget, trader-alerts | Work: NSE tickers, IST, ₹ |
+| trader-news, trader-analyst, trader-pelosi, trader-broker | Still US-only (SEC, US news, Alpaca) |
+
+What changed (see `india_patch.py`, which re-applies everything to a fresh clone): IST clock with no daylight time; session 9:15 to 15:30; NSE 2026 holiday list; symbols go to Yahoo as NAME.NS (M&M is URL-encoded); NSE ticker rules (digits, & and -); Nifty 500 list in `trader-scanner/nifty500.txt` (from niftyindices.com, read 2026-11-07); ₹ in the output.
+
+Not checked yet: the original test suite is written for US hours and will fail on this edition. The scripts were tested on NSE-shaped data offline, and Yahoo's NSE bars were checked to be 75 five-minute bars a day from 9:15 IST.
+
+Not financial advice. A scan, a replay or a signal is not a reason to buy anything.
+
+---
+
 # The Day Trader skill
 
-11 Claude skills for day trading: scan thousands of charts, track breaking news, time every entry and exit, and replay every outcome before you risk a dollar.
+11 Claude skills for day trading: scan thousands of charts, track breaking news, time every entry and exit, and replay every outcome before you risk a rupee.
 
 Free, MIT, no signup, no API key. The tools are plain Python that read free
 public data: Yahoo Finance charts, Nasdaq Trader's symbol lists, SEC EDGAR
@@ -9,7 +29,7 @@ and the House Clerk.
 One scans thousands of charts for setups. Another tracks breaking news on
 every stock you watch. One watches a setup bar by bar and tells you the moment
 to get in, and another sets your stop and your target before you do. And the
-craziest one is the Time Machine: before you risk a dollar, it replays the
+craziest one is the Time Machine: before you risk a rupee, it replays the
 rest of the session 10,000 times from the stock's own recent bars, plus every
 past day the same setup fired, and tells you the honest odds.
 
@@ -65,7 +85,7 @@ or in the `SEC_USER_AGENT` environment variable.
 | `/trader-news` | News Monitor | Tracks breaking news on every stock you watch and flags what moves it. |
 | `/trader-entry` | Entry Timer | Watches a setup bar by bar and tells you the moment to get in. |
 | `/trader-exit` | Exit Planner | Sets your stop and your target before you enter, so you know when to get out. |
-| `/trader-timemachine` | Time Machine | Replays every possible outcome of a trade before you risk a dollar: 10,000 simulated sessions plus every past time the setup fired. |
+| `/trader-timemachine` | Time Machine | Replays every possible outcome of a trade before you risk a rupee: 10,000 simulated sessions plus every past time the setup fired. |
 | `/trader-risk` | Risk Manager | Checks every trade against your limits and stops anything over them. |
 | `/trader-budget` | Budget Manager | Sizes every position to your budget and your max loss per trade. |
 | `/trader-broker` | Order Executor | Sends approved orders to your broker, paper trading by default, never without your yes. |
@@ -105,7 +125,7 @@ An example, the trade in the reel: Tesla, Monday October 19 2026, real data.
    29.4 %, stop first 25.5 %, still open at the close 45.1 %. It also re-ran
    the same rule on those 59 real sessions: it fired 33 times, 13 hit the
    target, 15 the stop, 5 neither. Its verdict: close to a coin flip. That is
-   the point of looking before you risk a dollar.
+   the point of looking before you risk a rupee.
 6. **`/trader-budget`** with a $5,000 account and a $50 max loss per trade:
    50 / 5.86 = 8 shares ($2,913.44). If the stop fills at 358.32, the loss is
    $46.88. It writes one bracket order: buy 8 TSLA, stop-loss 358.32,
