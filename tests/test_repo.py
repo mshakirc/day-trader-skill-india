@@ -5,15 +5,13 @@ import unittest
 
 from _load import ROOT
 
-# v2, the day-trading pack: the eleven folders the reel's repo card shows
+# India (NSE) edition: the eight skills that work on NSE stocks
 SKILLS = ["trader-scanner", "trader-news", "trader-entry", "trader-exit", "trader-timemachine",
-          "trader-risk", "trader-budget", "trader-broker", "trader-alerts", "trader-analyst",
-          "trader-pelosi"]
-ABOUT = ("11 Claude skills for day trading: scan thousands of charts, track breaking news, time every "
-         "entry and exit, and replay every outcome before you risk a dollar.")
+          "trader-risk", "trader-budget", "trader-alerts"]
+US_ONLY = ["trader-broker", "trader-analyst", "trader-pelosi"]
 # skills on the way to an order carry the safety block
 ORDER_PATH = ["trader-scanner", "trader-entry", "trader-exit", "trader-timemachine", "trader-budget",
-              "trader-pelosi", "trader-risk", "trader-broker", "trader-alerts"]
+              "trader-risk", "trader-alerts"]
 V1_ONLY = ["trader-copycat", "trader-screener", "trader-tax", "trader-rebalance"]
 
 
@@ -33,14 +31,14 @@ def every_text_file():
 
 
 class Repo(unittest.TestCase):
-    def test_eleven_skill_folders_at_the_root(self):
+    def test_eight_skill_folders_at_the_root(self):
         found = sorted(d for d in os.listdir(ROOT)
                        if os.path.isfile(os.path.join(ROOT, d, "SKILL.md")))
         self.assertEqual(found, sorted(SKILLS))
 
     def test_root_matches_the_reel(self):
         root = sorted(d for d in os.listdir(ROOT) if not d.startswith(".git"))
-        self.assertEqual(root, sorted([".claude-plugin", "LICENSE", "README.md", "tests"] + SKILLS))
+        self.assertEqual(root, sorted([".claude-plugin", "LICENSE", "README.md", "india_patch.py", "tests"] + SKILLS))
 
     def test_frontmatter_name_and_description(self):
         for s in SKILLS:
@@ -55,31 +53,37 @@ class Repo(unittest.TestCase):
             _, text = frontmatter(os.path.join(ROOT, s, "SKILL.md"))
             low = " ".join(text.lower().split())
             self.assertIn("not financial advice", low, s)
-            self.assertIn("yes", low, s)
+            self.assertIn("places it themselves", low, s)
 
     def test_plugin_manifest_points_at_the_root_skills(self):
         with open(os.path.join(ROOT, ".claude-plugin", "plugin.json")) as fh:
             plugin = json.load(fh)
-        self.assertEqual(plugin["name"], "day-trader-skill")
+        self.assertEqual(plugin["name"], "day-trader-skill-india")
         self.assertEqual(plugin["skills"], "./")
-        self.assertEqual(plugin["description"], ABOUT)
+        self.assertIn("NSE", plugin["description"])
         with open(os.path.join(ROOT, ".claude-plugin", "marketplace.json")) as fh:
             market = json.load(fh)
-        self.assertEqual(market["name"], "day-trader-skill")
-        self.assertEqual(market["plugins"][0]["name"], "day-trader-skill")
+        self.assertEqual(market["name"], "day-trader-skill-india")
+        self.assertEqual(market["plugins"][0]["name"], "day-trader-skill-india")
 
-    def test_readme_carries_the_reel_copy(self):
+    def test_readme_lists_every_skill_and_the_install(self):
         with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as fh:
             readme = " ".join(fh.read().split())
-        self.assertTrue(readme.startswith("# The Day Trader skill"))
-        for line in (ABOUT,
-                     "https://github.com/Jakeschincariol/day-trader-skill install skill",
-                     "/plugin marketplace add Jakeschincariol/day-trader-skill",
-                     "/plugin install day-trader-skill@day-trader-skill",
+        self.assertTrue(readme.startswith("# Day Trader Skill: India (NSE) edition"))
+        for line in ("https://github.com/mshakirc/day-trader-skill-india install skill",
+                     "/plugin marketplace add mshakirc/day-trader-skill-india",
                      "## Fine print"):
             self.assertIn(line, readme)
         for s in SKILLS:
             self.assertIn("/" + s, readme, s)
+
+    def test_no_us_leftovers_in_the_skills(self):
+        # India only: no US clock, exchange, dollars or removed skills in what Claude reads or prints
+        bad = re.compile(r"New York|\bET\b|\bNYSE\b|Alpaca|\$\d|trader-broker|trader-analyst|trader-pelosi|ticket\.py")
+        for s in SKILLS:
+            _, text = frontmatter(os.path.join(ROOT, s, "SKILL.md"))
+            for i, line in enumerate(text.splitlines(), 1):
+                self.assertIsNone(bad.search(line), "%s/SKILL.md:%d %s" % (s, i, line))
 
     def test_no_em_dashes_and_no_personal_email(self):
         for path in every_text_file():

@@ -82,7 +82,7 @@ GRACE = 2        # seconds after a bar closes before watch asks for it
 SETTLE = 60      # seconds a closed bar may wait for Yahoo's data to catch up
 HOSTS = ("query2", "query1")
 INTERVALS = {"1m": 60, "5m": 300}
-DEFAULTS = {"no_entries_before": "09:45", "no_entries_after": "15:30"}
+DEFAULTS = {"no_entries_before": "09:45", "no_entries_after": "15:00"}
 EPOCH = datetime.datetime(1970, 1, 1)
 
 NSE_HOLIDAYS = {  # NSE equity trading holidays 2026 (source: NSE list via cleartax.in, Feb 2026). Add 2027 when NSE publishes it.
@@ -953,7 +953,24 @@ def main(argv=None):
         return 1
 
 
+
+class _RupeeCommas(object):
+    """India patch: ₹3881.00 -> ₹3,881.00 in printed text (JSON escapes ₹, so it is untouched)."""
+    _rx = __import__("re").compile(r"₹(-?)(\d{4,})(\.\d+)?")
+
+    def __init__(self, stream):
+        self._s = stream
+
+    def write(self, text):
+        return self._s.write(self._rx.sub(lambda m: "₹%s%s%s" % (m.group(1), "{:,}".format(int(m.group(2))),
+                                                                  m.group(3) or ""), text))
+
+    def __getattr__(self, name):
+        return getattr(self._s, name)
+
+
 if __name__ == "__main__":
+    sys.stdout = _RupeeCommas(sys.stdout)
     sys.exit(main())
 
 # India patch: rupees

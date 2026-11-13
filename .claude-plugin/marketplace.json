@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "day-trader-skill-india",
-      "description": "Claude day-trading skills patched for NSE India: IST session 9:15-3:30, NSE holidays, Nifty 500 scanner, rupee prices. Scanner, entry timer, exit planner, 10,000-replay time machine, risk, budget and alerts. Original by Jake Schincariol (MIT).",
+      "description": "India (NSE) only: IST session 9:15-3:30, NSE holidays, Nifty 500 scanner, rupee prices, Google News India. Scanner, news, entry timer, exit planner, 10,000-replay time machine, budget, risk and alerts. Never places an order. Original by Jake Schincariol (MIT).",
       "source": "./",
       "category": "productivity",
       "homepage": "https://github.com/mshakirc/day-trader-skill-india"

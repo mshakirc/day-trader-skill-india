@@ -35,13 +35,12 @@ Quotes (free, delayed, unofficial; for alerts only, never for timing an order):
   yahoo   https://query2.finance.yahoo.com/v8/finance/chart/TSLA (falls back to
           query1 on a 429 or a 5xx; one retry with a pause on a 429; one
           request per ticker, half a second apart; the default)
-  stooq   https://stooq.com/q/l/?s=tsla.us&f=sd2t2ohlcv&h&e=csv (Stooq's free
-          CSV; it answered 404 on 2026-10-13, kept for when it is back)
+  stooq   Stooq's free CSV, US tickers only (it has no NSE quotes); kept
+          from the US edition, do not use it for NSE stocks
   --offline DIR reads DIR/<source>-<TICKER>.json|csv (or .json.gz) instead.
 
-NSE calendar: the 2026 and 2027 holidays and 1:00 p.m. early closes as
-published at https://www.nseindia.com/markets/hours-calendars (read 2026-10-13).
-Outside those years the clock says the holiday list is unknown.
+NSE calendar: session 9:15 to 15:30 IST, the NSE 2026 equity trading holidays,
+no scheduled half days. Outside 2026 the clock says the holiday list is unknown.
 """
 
 import argparse
@@ -453,8 +452,7 @@ def evaluate(rules, quotes, status, state, now_utc):
                     ", the market has closed."
                 sym = str(r.get("symbol") or "").upper()
                 if sym:
-                    msg += (" If %s is still open, close it: trader-broker flatten --symbol %s builds the sell "
-                            "ticket, then trader-risk and your yes." % (sym, sym))
+                    msg += (" If %s is still open, close it yourself in your broker's app." % sym)
                 rings.append({"id": rid, "symbol": sym, "message": msg})
                 rung[rid] = stamp
             continue
@@ -559,7 +557,7 @@ def cmd_clock(a):
 def cmd_quote(a):
     syms = _dedupe([s.upper() for s in a.symbols] + (holdings(a) if a.holdings else []))
     if not syms:
-        raise AlertError("which tickers? alerts.py quote TSLA KO, or --holdings")
+        raise AlertError("which tickers? alerts.py quote RELIANCE TCS, or --holdings")
     now = parse_now(a.now)
     quotes, errors = get_quotes(syms, a.source, a.offline)
     if a.write and quotes:
@@ -614,8 +612,7 @@ def cmd_check(a):
             print("error: " + e)
         if rings:
             print("An alert is information, not an order. A bracket's stop-loss and take-profit already sit at "
-                  "the broker: check get_open_position and record any fill (ticket.py fill). To close a "
-                  "position yourself: ticket.py flatten, then trader-risk and your yes.")
+                  "your broker: check your positions in your broker's app. To close one, sell it there yourself.")
     return 0 if rings else 1
 
 
@@ -780,7 +777,24 @@ def main(argv=None):
         return 1
 
 
+
+class _RupeeCommas(object):
+    """India patch: ₹3881.00 -> ₹3,881.00 in printed text (JSON escapes ₹, so it is untouched)."""
+    _rx = __import__("re").compile(r"₹(-?)(\d{4,})(\.\d+)?")
+
+    def __init__(self, stream):
+        self._s = stream
+
+    def write(self, text):
+        return self._s.write(self._rx.sub(lambda m: "₹%s%s%s" % (m.group(1), "{:,}".format(int(m.group(2))),
+                                                                  m.group(3) or ""), text))
+
+    def __getattr__(self, name):
+        return getattr(self._s, name)
+
+
 if __name__ == "__main__":
+    sys.stdout = _RupeeCommas(sys.stdout)
     sys.exit(main())
 
 # India patch: rupees

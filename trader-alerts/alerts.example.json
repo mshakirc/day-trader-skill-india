@@ -1,9 +1,9 @@
 {
   "rules": [
     {"id": "opening-bell", "type": "opening_bell"},
-    {"id": "tsla-plan-stop", "symbol": "TSLA", "type": "stop", "price": 358.32, "note": "plan stop: opening-range midpoint", "date": "2026-10-19"},
-    {"id": "tsla-plan-target", "symbol": "TSLA", "type": "target", "price": 370.04, "note": "plan target: 1R (one times the risk)", "date": "2026-10-19"},
-    {"id": "tsla-flat-by", "symbol": "TSLA", "type": "time", "at": "15:55", "label": "flat by close", "before_close": true, "date": "2026-10-19"},
-    {"id": "tsla-move-3", "symbol": "TSLA", "type": "pct_move", "pct": 3}
+    {"id": "tataelxsi-plan-stop", "symbol": "TATAELXSI", "type": "stop", "price": 3843.35, "note": "plan stop: opening-range midpoint", "date": "2026-11-13"},
+    {"id": "tataelxsi-plan-target", "symbol": "TATAELXSI", "type": "target", "price": 3956.3, "note": "plan target: 2R", "date": "2026-11-13"},
+    {"id": "tataelxsi-flat-by", "symbol": "TATAELXSI", "type": "time", "at": "15:25", "label": "flat by close", "before_close": true, "date": "2026-11-13"},
+    {"id": "reliance-move-3", "symbol": "RELIANCE", "type": "pct_move", "pct": 3}
   ]
 }

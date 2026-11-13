@@ -5,7 +5,7 @@ Default mode: sizes ONE day trade from trader/plan.json (written by
 trader-exit) to your budget and your max loss per trade, then writes one
 bracket order (entry, stop-loss, take-profit) to trader/orders.json in the
 shape of Alpaca's place_stock_order. It never places anything: trader-risk
-checks the order and trader-broker asks you yes or no.
+checks the order; you place it yourself in your broker's app.
 
     python3 size.py                                  # trader/plan.json + trader/config.json
     python3 size.py --write                          # write trader/orders.json
@@ -44,7 +44,7 @@ list of stocks by weight.
                    weight, again and again until nobody is over
   4. min order     a slice under min_order_usd is dropped and its weight
                    shared out, so you never place a $2 order
-  5. rounding      whole dollars by default (--cents for cents); the rounding
+  5. rounding      whole rupees by default (--cents for paise); the rounding
                    dollar goes to the biggest position that is not capped
   6. whole shares  with --whole-shares or "fractional": false; needs prices
 
@@ -63,19 +63,18 @@ DEFAULTS = {
     "budget": None,
     "cash_buffer_pct": 10,
     "max_position_pct": 75,
-    "max_order_usd": 4000,
-    "min_order_usd": 5,
-    "max_loss_per_trade_usd": 50,
-    "max_daily_loss_usd": 150,
+    "max_order_usd": 100000,
+    "min_order_usd": 500,
+    "max_loss_per_trade_usd": 1000,
+    "max_daily_loss_usd": 3000,
     "max_trades_per_day": 3,
     "max_orders_per_day": 10,
     "min_reward_risk": 1.0,
     "require_stop": True,
     "no_entries_before": "09:45",
-    "no_entries_after": "15:30",
+    "no_entries_after": "15:00",
     "flat_by": "15:25",
     "fractional": False,
-    "broker": "alpaca",
     "paper": True,
     "blocked": [],
     "allow_options": False,
@@ -462,16 +461,15 @@ def plan_report(s, order, notes=()):
                     _price(s["risk_per_share"]), money(s["max_loss"])))
     lines.append("A stop is an order, not a promise: in a fast market it can fill below %s." % _price(s["stop"]))
     lines.append("")
-    lines.append("Proposed bracket order (place_stock_order arguments, nothing has been placed):")
+    lines.append("Proposed bracket order (nothing has been placed):")
     how = "limit %s" % order["limit_price"] if order["type"] == "limit" else "market"
     lines.append("  buy %s %s, %s, day, take-profit %s, stop-loss %s"
                  % (order["qty"], order["symbol"], how, order["take_profit_limit_price"],
                     order["stop_loss_stop_price"]))
     if s["flat_by"]:
-        lines.append("Flat by %s India (IST): anything still open then gets closed (trader-alerts rings, "
-                     "trader-broker flatten)." % s["flat_by"])
+        lines.append("Flat by %s India (IST): close anything still open by then (trader-alerts rings)." % s["flat_by"])
     lines.append("")
-    lines.append("Next: trader-risk checks it, then trader-broker asks you yes or no.")
+    lines.append("Next: trader-risk checks it. Then you place it yourself in your broker's app (Kite, Groww, Upstox...).")
     lines.append("Education and tooling, not financial advice.")
     return "\n".join(lines)
 
@@ -704,7 +702,7 @@ def report(result, orders, source=""):
                     money(r["investable"]), _num(r["max_position_pct"]), money(r["cap"])))
     lines.append("")
     has_price = any("price" in p for p in r["positions"])
-    head = "%-7s %-22s %8s %11s" % ("ticker", "name", "weight", "dollars")
+    head = "%-7s %-22s %8s %11s" % ("ticker", "name", "weight", "rupees")
     if has_price:
         head += " %10s %10s" % ("price", "shares")
     lines.append(head + "  note")
@@ -726,14 +724,14 @@ def report(result, orders, source=""):
     for d in r["dropped"]:
         lines.append("Dropped %s: %s" % (d["ticker"], d["reason"]))
     lines.append("")
-    lines.append("Proposed orders (place_stock_order arguments, nothing has been placed):")
+    lines.append("Proposed orders (nothing has been placed):")
     for o in orders:
         amount = ("notional \"%s\"" % o["notional"]) if "notional" in o else ("qty \"%s\"" % o["qty"])
         lines.append("  %s %s %s, %s, %s" % (o["side"], o["symbol"], amount, o["type"], o["time_in_force"]))
     lines.append("")
     lines.append("These buys have no stop. trader-risk blocks them while \"require_stop\" is true and applies "
                  "your day-trade limits to every buy.")
-    lines.append("Next: trader-risk checks every order, then trader-broker asks you yes or no for each one.")
+    lines.append("Next: trader-risk checks every order. Then you place them yourself in your broker's app.")
     lines.append("Education and tooling, not financial advice.")
     return "\n".join(lines)
 
@@ -850,11 +848,11 @@ def main(argv=None):
                     help="write the proposed order (default trader/orders.json)")
     ap.add_argument("--json", action="store_true", help="print JSON instead of the report")
     g = ap.add_argument_group("weights mode (split a budget across a list)")
-    g.add_argument("--weights", help="inline weights: AAPL=22.04,AXP=17.14")
+    g.add_argument("--weights", help="inline weights: TCS=40,INFY=60")
     g.add_argument("--targets", help="a weights file: {\"weights\": [{\"ticker\", \"weight\"}]}")
     g.add_argument("--top", type=int, help="keep only the N biggest weights")
     g.add_argument("--whole-shares", action="store_true", help="whole shares only (needs --prices)")
-    g.add_argument("--cents", action="store_true", help="size to the cent instead of whole dollars")
+    g.add_argument("--cents", action="store_true", help="size to the paisa instead of whole rupees")
     a = ap.parse_args(argv)
     try:
         cfg = load_config(a.config)

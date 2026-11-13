@@ -32,12 +32,12 @@ and a neat plan does not change that.
 python3 "${CLAUDE_SKILL_DIR}/exit.py" plan                          # trader/entry.json: midpoint stop, 2R target
 python3 "${CLAUDE_SKILL_DIR}/exit.py" plan --stop or-mid --target 1R --write
 python3 "${CLAUDE_SKILL_DIR}/exit.py" plan --stop atr:1.5           # needs the session's bars (Yahoo or --offline)
-python3 "${CLAUDE_SKILL_DIR}/exit.py" plan --symbol TSLA --entry 364.18 --or-high 362.18 --or-low 354.47
+python3 "${CLAUDE_SKILL_DIR}/exit.py" plan --symbol TATAELXSI --entry 3881 --or-high 3865.10 --or-low 3821.60
 python3 "${CLAUDE_SKILL_DIR}/exit.py" show                          # the current trader/plan.json
 ```
 
-Other flags: `--flat-by 15:25`, `--json`, `--now "2026-10-19 10:15"` (New
-York time), `--entry PRICE` with a waiting entry.json to plan ahead, `--setup
+Other flags: `--flat-by 15:25`, `--json`, `--now "2026-11-13 09:45"` (India
+time, IST), `--entry PRICE` with a waiting entry.json to plan ahead, `--setup
 level`, `--offline FILE` (a saved Yahoo chart JSON for an ATR stop).
 
 ## What it reads and writes
@@ -88,24 +88,24 @@ A level setup has no opening range to lean on, so it needs a stop you name.
    the target and the flat-by time. Claude can keep `entry.py watch` running
    in the background or on a `/loop` until a setup triggers, then come here.
 
-## Example: the reel
+## Example: a real NSE day
 
-TSLA, Monday 2026-10-19. The entry is 364.18 at 10:15 AM (the 10:10 bar,
-bar 8) and the opening range is 354.47 to 362.18. `exit.py plan --stop
-or-mid --target 1R --write`:
+TATAELXSI, Friday 2026-11-13. The opening range (9:15 to 9:30) is 3,821.60
+to 3,865.10, and the 9:40 bar closed above it: entry 3,881 at 9:45 AM.
+`exit.py plan --symbol TATAELXSI --entry 3881 --or-high 3865.10 --or-low 3821.60 --time "9:45 AM"`:
 
 ```
-Exit plan: TSLA long, Mon 2026-10-19, opening-range breakout on 5-minute bars
-  Entry         $364.18 at 10:15 AM (bar 8)
-  Stop          $358.32  opening-range midpoint: ($362.18 + $354.47) / 2 = $358.325, rounded down
-  Target        $370.04  1R (one times the risk)
-  Risk a share  $5.86 (1.61% of the entry)
-  Reward:risk   1.0
-  Flat by       15:25 ET, win or lose: no overnight hold
+Exit plan: TATAELXSI long, Fri 2026-11-13, opening-range breakout on 5-minute bars
+  Entry         ₹3,881.00 at 9:45 AM
+  Stop          ₹3,843.35  opening-range midpoint: (₹3,865.10 + ₹3,821.60) / 2 = ₹3,843.35
+  Target        ₹3,956.30  2R (two times the risk)
+  Risk a share  ₹37.65 (0.97% of the entry)
+  Reward:risk   2.0
+  Flat by       15:25 IST, win or lose: no overnight hold
 ```
 
-The default 2R target would be 364.18 + 2 x 5.86 = 375.90. trader-budget then
-sizes it: a $50 max loss per trade buys floor(50 / 5.86) = 8 shares.
+trader-budget then sizes it: a ₹1,000 max loss per trade buys
+floor(1000 / 37.65) = 26 shares (on a ₹1,00,000 account the cash caps it at 25).
 
 ## Rules
 
@@ -126,9 +126,6 @@ make a plan pass, and never calls a stop a guarantee.
 
 - Education and tooling, not financial advice. A PASS is a rules check, not a recommendation.
 - Paper trading by default (`"paper": true`). Going live is the user's own decision, in their own config.
-- Nothing in this pack places an order except trader-broker, and only when all three hold: trader-risk
-  passed that exact order today, the user typed an explicit yes for that one order in the chat, and the
-  user clicked Allow once on Claude's own card because the order tool is set to "Needs approval"
-  (Customize > Connectors > tool permissions). Never set an order tool to "Always allow".
+- Nothing in this pack places an order. The user places it themselves in their own broker's app
+  (Zerodha Kite, Groww, Upstox...), and only after trader-risk passed that exact order today.
 - No options, margin, short selling or leverage unless the config allows it and the user confirms.
-- Broker keys live in environment variables or the Claude Desktop config, never in the chat.

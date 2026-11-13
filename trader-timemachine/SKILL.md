@@ -36,14 +36,14 @@ python3 "${CLAUDE_SKILL_DIR}/timemachine.py" run                    # trader/pla
 python3 "${CLAUDE_SKILL_DIR}/timemachine.py" run --write            # also save trader/timemachine.json
 python3 "${CLAUDE_SKILL_DIR}/timemachine.py" run --until 15:25      # end each replay at your flat-by time
 python3 "${CLAUDE_SKILL_DIR}/timemachine.py" run --json
-python3 "${CLAUDE_SKILL_DIR}/timemachine.py" run --symbol TSLA --date 2026-10-19 \
-    --entry 364.18 --stop 358.32 --target 370.04 --entry-time "10:15 AM"
+python3 "${CLAUDE_SKILL_DIR}/timemachine.py" run --symbol TATAELXSI --date 2026-11-13 \
+    --entry 3881 --stop 3843.35 --target 3956.30 --entry-time "9:45 AM"
 python3 "${CLAUDE_SKILL_DIR}/timemachine.py" chart --from           # ASCII fan chart of the saved run
 ```
 
 Other flags: `--replays N`, `--seed N` (default 19), `--window N` (default 2
 bars), `--offline FILE` (a saved Yahoo chart JSON, `.json` or `.json.gz`),
-`--now "2026-10-19 10:15"` (New York time) to pin the clock.
+`--now "2026-11-13 09:45"` (India time, IST) to pin the clock.
 
 ## What it reads and writes
 
@@ -67,8 +67,8 @@ bars), `--offline FILE` (a saved Yahoo chart JSON, `.json` or `.json.gz`),
    random, and scale it to the current price. Bar by bar, it checks the stop
    first, then the target. A bar that touches both counts as the stop.
 3. **10,000 replays** give four odds. Target first. Stop first. Neither,
-   which means the trade was still open at `--until` (default 4:00 PM, the
-   close, or 1:00 PM on an NYSE early-close day). Green, which means target
+   which means the trade was still open at `--until` (default 3:30 PM, the
+   NSE close). Green, which means target
    first or above the entry at `--until`.
    R is +1 at a 1R target, -1 at the stop, and otherwise the distance from
    the entry at `--until` divided by the risk. A gap through the stop still
@@ -117,30 +117,30 @@ grid). A live in-progress bar is never used.
    `/trader-news` for the stock before going on.
 6. If the user still wants the trade, hand off to `/trader-budget` to size it.
 
-## Example: the reel
+## Example: a real NSE day
 
-TSLA, Monday 2026-10-19. The 15-minute opening range is 354.47 to 362.18.
-The 10:10 bar closes above it: entry 364.18 at 10:15 AM (bar 8), stop 358.32
-(the range midpoint, rounded down), target 370.04 (1R, risk 5.86 a share).
+TATAELXSI, Friday 2026-11-13. The 15-minute opening range is 3,821.60 to
+3,865.10. The 9:40 bar closes above it: entry 3,881 at 9:45 AM (bar 5), stop
+3,843.35 (the range midpoint), target 3,956.30 (2R, risk 37.65 a share).
 
 ```
-10,000 replays of the rest of the session, 10:15 AM to 4:00 PM (69 five-minute bars), seed 19.
-  target first   29.4 %
-  stop first     25.5 %
-  neither        45.1 %   still open at 4:00 PM
-  green          51.7 %   target first, or above the entry at 4:00 PM
-  Price at 4:00 PM: median 364.36, 90 % of replays between 355.54 and 373.54.
-  Average R: +0.034
-History: the same rule on each of those 59 real sessions fired 33 times:
-13 target, 15 stop, 5 neither. Average R -0.062.
-Close to a coin flip: target first 29.4 % vs stop first 25.5 %.
-45.1 % of the replays hit neither by 4:00 PM; the price at 4:00 PM decides those.
+10,000 replays of the rest of the session, 9:45 AM to 3:30 PM (69 five-minute bars), seed 19.
+  target first   9.0 %
+  stop first     50.4 %
+  neither        40.6 %   still open at 3:30 PM
+  green          35.7 %   target first, or above the entry at 3:30 PM
+  Price at 3:30 PM: median 3869.47, 90 % of replays between 3787.70 and 3955.83.
+  Average R: -0.187 (R = the 37.65 risk: +2R at the target, -1R at the stop).
+History: the same rule on each of those 59 real sessions fired 29 times:
+6 target, 16 stop, 7 neither. Average R -0.090.
+Strongly toward the stop: at 2R the target has to come first in 33 % of the replays that hit one side; it did in 15 %.
 ```
 
-At 1R the target has to come first in half of the replays that hit one
-side. It did in 53.6 %. The replays came out close to a coin flip, and the
-real history was slightly worse than even. That is the honest answer for this setup, and it is what
-the user should hear before `/trader-budget` sizes 8 shares.
+At 2R the target only has to come first in a third of the replays that hit
+one side. It did in 15 %, and the real history agrees (6 targets, 16 stops).
+That is the honest answer for this setup, and it is what the user should
+hear before `/trader-budget` sizes it. Yahoo's NSE bars have gaps; the tool
+says how many it filled with flat bars.
 
 ## Rules
 
@@ -165,9 +165,6 @@ into the pool.
 
 - Education and tooling, not financial advice. A PASS is a rules check, not a recommendation.
 - Paper trading by default (`"paper": true`). Going live is the user's own decision, in their own config.
-- Nothing in this pack places an order except trader-broker, and only when all three hold: trader-risk
-  passed that exact order today, the user typed an explicit yes for that one order in the chat, and the
-  user clicked Allow once on Claude's own card because the order tool is set to "Needs approval"
-  (Customize > Connectors > tool permissions). Never set an order tool to "Always allow".
+- Nothing in this pack places an order. The user places it themselves in their own broker's app
+  (Zerodha Kite, Groww, Upstox...), and only after trader-risk passed that exact order today.
 - No options, margin, short selling or leverage unless the config allows it and the user confirms.
-- Broker keys live in environment variables or the Claude Desktop config, never in the chat.

@@ -56,7 +56,7 @@ What blocks an entry (on top):
 
 Exit code 0 when every order passes, 1 when any order is blocked.
 The verdicts go to trader/state/risk.json with a fingerprint of each order,
-so trader-broker only shows an order as ready if THIS exact order passed today.
+so you know THIS exact order passed today.
 """
 
 import argparse
@@ -68,10 +68,10 @@ import re
 import sys
 
 DEFAULTS = {
-    "budget": None, "cash_buffer_pct": 10, "max_position_pct": 75, "max_order_usd": 4000,
-    "min_order_usd": 5, "max_loss_per_trade_usd": 50, "max_daily_loss_usd": 150, "max_trades_per_day": 3,
+    "budget": None, "cash_buffer_pct": 10, "max_position_pct": 75, "max_order_usd": 100000,
+    "min_order_usd": 500, "max_loss_per_trade_usd": 1000, "max_daily_loss_usd": 3000, "max_trades_per_day": 3,
     "max_orders_per_day": 10, "min_reward_risk": 1.0, "require_stop": True,
-    "no_entries_before": "09:45", "no_entries_after": "15:30", "flat_by": "15:25",
+    "no_entries_before": "09:45", "no_entries_after": "15:00", "flat_by": "15:25",
     "paper": True, "blocked": [], "allow_options": False, "allow_margin": False, "allow_short": False,
     "pdt_guard": False,
 }
@@ -252,7 +252,7 @@ def read_json(path, what, required=True):
 
 
 def fingerprint(order):
-    """Same function in trader-broker/ticket.py: the exact order that was checked."""
+    """The exact order that was checked."""
     core = {k: order[k] for k in ALPACA_FIELDS if k in order and order[k] is not None}
     blob = json.dumps(core, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
@@ -314,7 +314,7 @@ def rec_day(rec):
 
 
 def rec_is_entry(rec):
-    """trader-broker logs the kind trader-risk gave; older records: a buy is an entry."""
+    """The log keeps the kind trader-risk gave; older records: a buy is an entry."""
     k = rec.get("kind")
     if k:
         return k == "entry"
@@ -322,7 +322,7 @@ def rec_is_entry(rec):
 
 
 def placed_today(state, today):
-    """Orders recorded as placed today by trader-broker."""
+    """Orders recorded as placed today in the broker log."""
     out = []
     for rec in (state or {}).get("orders", []):
         if rec.get("status") == "placed" and rec_day(rec) == today:
@@ -425,14 +425,14 @@ def check(orders, cfg, portfolio=None, prices=None, state=None, today=None, now=
                 if v is None or v <= 0:
                     reasons.append("format: %s must be a positive number, got %r" % (k, o.get(k)))
                 elif not isinstance(o.get(k), str):
-                    warns.append("send %s as a string (\"%s\"), the way place_stock_order types it"
+                    warns.append("send %s as a string (\"%s\"), the way broker order forms type it"
                                  % (k, o.get(k)))
         if typ not in TYPES:
             reasons.append("format: unknown order type %r" % typ)
         if tif not in TIFS:
             reasons.append("format: unknown time_in_force %r" % tif)
         if notional is not None and (typ != "market" or tif != "day"):
-            reasons.append("format: a notional (dollar) order must be a market order with time_in_force day")
+            reasons.append("format: a notional (rupee amount) order must be a market order with time_in_force day")
         if typ in ("limit", "stop_limit") and o.get("limit_price") is None:
             reasons.append("format: a %s order needs a limit_price" % typ)
         if typ in ("stop", "stop_limit") and o.get("stop_price") is None:
@@ -548,7 +548,7 @@ def check(orders, cfg, portfolio=None, prices=None, state=None, today=None, now=
                 over = held <= 0
             if over and not c.get("allow_short"):
                 reasons.append("short: selling more %s than you hold (%s shares); short selling is off. "
-                               "If you bought it, record the fill first (ticket.py fill)" % (sym, _num(held)))
+                               "If you bought it, record it in trader/state/broker.json first" % (sym, _num(held)))
 
         # day-trade checks: stop, loss, reward:risk, daily loss, trades, window, pdt
         max_loss = risk_ps = rr = stop = target = None
@@ -720,7 +720,7 @@ def report(res):
     if res["block"]:
         lines.append("Blocked orders do not go to the broker. Fix the order or your rules, then check again.")
     else:
-        lines.append("Every order passed. trader-broker still asks you yes or no for each one.")
+        lines.append("Every order passed. Nothing was placed: you place each one yourself in your broker's app.")
     lines.append("Education and tooling, not financial advice.")
     return "\n".join(lines)
 
@@ -755,7 +755,7 @@ def main(argv=None):
     ap.add_argument("--portfolio", default="trader/portfolio.json",
                     help="your account; if missing, a fresh account funded with the budget")
     ap.add_argument("--prices", default="trader/prices.json")
-    ap.add_argument("--state", default="trader/state/broker.json", help="what trader-broker placed today")
+    ap.add_argument("--state", default="trader/state/broker.json", help="what you placed today (optional log)")
     ap.add_argument("--now", help="pretend it is this India (IST) time, e.g. \"2026-10-19 10:15\"")
     ap.add_argument("--today", help="YYYY-MM-DD (default: today in India (IST))")
     ap.add_argument("--out", default="trader/state/risk.json", help="where the verdicts are recorded")

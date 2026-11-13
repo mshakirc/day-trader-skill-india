@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Chart Scanner for trader-scanner: scan thousands of charts for setups. Standard library only.
 
-    python3 scan.py universe                          # Nasdaq Trader lists -> trader/universe.txt
+    python3 scan.py universe                          # Nifty 500 -> trader/universe.txt
     python3 scan.py daily                             # before the open: daily setups -> trader/watchlist.json
     python3 scan.py daily --symbols TSLA,NVDA,AMD     # or --watchlist FILE, or --limit 200
-    python3 scan.py orb                               # after 9:50 AM IST: opening-range breakouts so far
+    python3 scan.py orb                               # after 9:35 AM IST: opening-range breakouts so far
     python3 scan.py orb --at 10:15 --or-minutes 15    # cut the clock at 10:15 AM IST
     python3 scan.py orb --offline wall5m.json.gz --now "2026-10-19 10:15" --min-price 0
 
@@ -921,7 +921,7 @@ def cmd_orb(a):
     now = parse_now(a.now)
     at = parse_hhmm(a.at) if a.at else None
     cfg = read_config(a.config)
-    until = parse_hhmm(a.until or cfg.get("no_entries_after") or "15:30", "--until")
+    until = parse_hhmm(a.until or cfg.get("no_entries_after") or "15:00", "--until")
     data = failed = None
     explicit_day = None
     offline_syms = None
@@ -1008,7 +1008,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Chart Scanner (trader-scanner): daily setups and opening-range breakouts.")
     sub = ap.add_subparsers(dest="cmd")
 
-    p = sub.add_parser("universe", help="download Nasdaq Trader's lists -> trader/universe.txt")
+    p = sub.add_parser("universe", help="copy the bundled Nifty 500 list -> trader/universe.txt")
     p.add_argument("--out", default=DEFAULT_UNIVERSE)
     p.add_argument("--offline", metavar="DIR", help="a folder with nasdaqlisted.txt and otherlisted.txt")
     p.add_argument("--no-write", action="store_true")
@@ -1040,7 +1040,7 @@ def main(argv=None):
     p.add_argument("--max-confirm", type=int, default=MAX_CONFIRM,
                    help="v8 charts to fetch in stage 2, most traded first (%d; 0 = all)" % MAX_CONFIRM)
     p.add_argument("--at", help="cut the clock at this India (IST) time, HH:MM")
-    p.add_argument("--until", help="no new entries after HH:MM (default: config no_entries_after, 15:30)")
+    p.add_argument("--until", help="no new entries after HH:MM (default: config no_entries_after, 15:00)")
     p.add_argument("--config", default="trader/config.json")
     a = ap.parse_args(argv)
     if not a.cmd:
